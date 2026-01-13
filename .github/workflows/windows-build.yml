@@ -1,0 +1,59 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-2022 # GitHub's latest Windows runner with pre-configured SDKs
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+      
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.3
+      
+    - name: Build Windows app
+      run: npm run windows:release
+      env:
+        # Force release build for distribution
+        Configuration: Release
+        Platform: x64
+        
+    - name: Create artifacts directory
+      run: mkdir windows-build-output
+      
+    - name: Copy build outputs
+      run: |
+        Copy-Item "windows\nuvio.Package\AppPackages\**\*.msix" -Destination "windows-build-output\" -Recurse -ErrorAction SilentlyContinue
+        Copy-Item "windows\nuvio.Package\AppPackages\**\*.appx" -Destination "windows-build-output\" -Recurse -ErrorAction SilentlyContinue
+        Copy-Item "windows\x64\Release\*.exe" -Destination "windows-build-output\" -ErrorAction SilentlyContinue
+      
+    - name: Upload Windows build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-app-release
+        path: windows-build-output/
+        retention-days: 30
+        
+    - name: Upload to Release (if tagged)
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: windows-build-output/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

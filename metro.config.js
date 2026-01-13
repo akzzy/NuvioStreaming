@@ -1,33 +1,47 @@
-const {
-  getSentryExpoConfig
-} = require("@sentry/react-native/metro");
+const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
-const config = getSentryExpoConfig(__dirname);
+const fs = require('fs');
+const path = require('path');
+const exclusionList = require('metro-config/src/defaults/exclusionList');
 
-// Enable tree shaking and better minification
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('react-native-svg-transformer'),
-  minifierConfig: {
-    ecma: 8,
-    keep_fnames: true,
-    mangle: {
-      keep_fnames: true,
-    },
-    compress: {
-      drop_console: true,
-      drop_debugger: true,
-      pure_funcs: ['console.log', 'console.info', 'console.debug'],
-    },
+const rnwPath = fs.realpathSync(
+  path.resolve(require.resolve('react-native-windows/package.json'), '..'),
+);
+
+//
+
+/**
+ * Metro configuration
+ * https://facebook.github.io/metro/docs/configuration
+ *
+ * @type {import('metro-config').MetroConfig}
+ */
+
+const config = {
+  //
+  resolver: {
+    blockList: exclusionList([
+      // This stops "react-native run-windows" from causing the metro server to crash if its already running
+      new RegExp(
+        `${path.resolve(__dirname, 'windows').replace(/[/\\]/g, '/')}.*`,
+      ),
+      // This prevents "react-native run-windows" from hitting: EBUSY: resource busy or locked, open msbuild.ProjectImports.zip or other files produced by msbuild
+      new RegExp(`${rnwPath}/build/.*`),
+      new RegExp(`${rnwPath}/target/.*`),
+      /.*\.ProjectImports\.zip/,
+    ]),
+    //
+  },
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        experimentalImportSupport: false,
+        inlineRequires: true,
+      },
+    }),
+    // This fixes the 'missing-asset-registry-path` error (see https://github.com/microsoft/react-native-windows/issues/11437)
+    assetRegistryPath: 'react-native/Libraries/Image/AssetRegistry',
   },
 };
 
-// Optimize resolver for better tree shaking and SVG support
-config.resolver = {
-  ...config.resolver,
-  assetExts: [...config.resolver.assetExts.filter((ext) => ext !== 'svg'), 'zip'],
-  sourceExts: [...config.resolver.sourceExts, 'svg'],
-  resolverMainFields: ['react-native', 'browser', 'main'],
-};
-
-module.exports = config;
+module.exports = mergeConfig(getDefaultConfig(__dirname), config);

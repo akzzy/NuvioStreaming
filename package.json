@@ -6,6 +6,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "windows": "react-native run-windows",
+    "windows:release": "react-native run-windows --release",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -105,6 +107,7 @@
     "babel-plugin-transform-remove-console": "^6.9.4",
     "patch-package": "^8.0.1",
     "react-native-svg-transformer": "^1.5.0",
+    "react-native-windows": "^0.73.22",
     "typescript": "^5.9.3",
     "xcode": "^3.0.1"
   },

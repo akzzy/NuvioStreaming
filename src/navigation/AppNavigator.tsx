@@ -42,6 +42,7 @@ import DownloadsScreen from '../screens/DownloadsScreen';
 import MetadataScreen from '../screens/MetadataScreen';
 import KSPlayerCore from '../components/player/KSPlayerCore';
 import AndroidVideoPlayer from '../components/player/AndroidVideoPlayer';
+import WindowsVideoPlayer from '../components/player/WindowsVideoPlayer';
 import CatalogScreen from '../screens/CatalogScreen';
 import AddonsScreen from '../screens/AddonsScreen';
 import SearchScreen from '../screens/SearchScreen';
@@ -84,15 +85,9 @@ import {
 } from '../screens/settings';
 
 
-// Optional Android immersive mode module
-let RNImmersiveMode: any = null;
-if (Platform.OS === 'android') {
-  try {
-    RNImmersiveMode = require('react-native-immersive-mode').default;
-  } catch {
-    RNImmersiveMode = null;
-  }
-}
+// Import platform-aware stubs instead of Android-only modules directly
+import { ImmersiveMode as RNImmersiveMode } from '../utils/platformStubs';
+
 
 // Stack navigator types
 export type RootStackParamList = {
@@ -1361,7 +1356,7 @@ const InnerNavigator = ({ initialRouteName }: { initialRouteName?: keyof RootSta
             />
             <Stack.Screen
               name="PlayerAndroid"
-              component={AndroidVideoPlayer as any}
+              component={Platform.OS === 'windows' ? WindowsVideoPlayer as any : AndroidVideoPlayer as any}
               options={{
                 animation: 'none',
                 animationDuration: 0,
@@ -1369,7 +1364,7 @@ const InnerNavigator = ({ initialRouteName }: { initialRouteName?: keyof RootSta
                 // Disable gestures during video playback
                 gestureEnabled: false,
                 // Ensure proper orientation handling
-                orientation: 'landscape',
+                orientation: Platform.OS === 'windows' ? undefined : 'landscape',
                 contentStyle: {
                   backgroundColor: '#000000', // Pure black for video player
                 },

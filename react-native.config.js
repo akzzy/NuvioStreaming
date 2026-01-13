@@ -1,17 +1,32 @@
-// Prevent expo-libvlc-player from linking on iOS (Android only)
+/**
+ * React Native configuration for Windows platform support
+ * This file tells React Native CLI about the Windows project
+ */
 module.exports = {
-  dependencies: {
-    'expo-libvlc-player': {
-      platforms: {
-        ios: null,
+  // Project configuration
+  project: {
+    ios: {},
+    android: {},
+    windows: {
+      sourceDir: 'windows',
+      solutionFile: 'nuvio.sln',
+      project: {
+        projectFile: 'nuvio\\nuvio.vcxproj',
       },
     },
-    'react-native-vlc-media-player': {
+  },
+  // Dependencies configuration  
+  dependencies: {
+    // Exclude expo packages from autolinking on Windows
+    'expo': {
       platforms: {
-        ios: null,
+        windows: null,
+      },
+    },
+    'expo-modules-core': {
+      platforms: {
+        windows: null,
       },
     },
   },
 };
-
-
